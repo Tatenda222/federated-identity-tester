@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation, useRoute, Link } from "wouter";
@@ -6,16 +5,14 @@ import {
   Shield, 
   Home, 
   AppWindow, 
-  UserCheck, 
-  Settings, 
-  Mail, 
-  LogOut,
-  Lock,
-  ShieldCheck
+  Settings
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useEffect } from "react";
+import UserProfileCard from "@/components/UserProfileCard";
+import ConnectivityStatus from "@/components/ConnectivityStatus";
+import IdentityInformation from "@/components/IdentityInformation";
+import ActivityLog from "@/components/ActivityLog";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -82,6 +79,17 @@ export default function Dashboard() {
                 </Link>
               </nav>
             </div>
+            <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full text-left text-gray-600 hover:text-gray-900"
+                >
+                  Sign out
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -104,211 +112,10 @@ export default function Dashboard() {
               <p className="text-gray-500 mt-1">Testing your federated identity management integration</p>
             </div>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
-              
-              {/* User Profile Card */}
-              <Card className="mb-6 animate-in fade-in-50 duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                      {user.avatar ? (
-                        <img src={user.avatar} className="h-full w-full rounded-full" alt={`${user.name}'s avatar`} />
-                      ) : (
-                        <UserCheck className="h-8 w-8" />
-                      )}
-                    </div>
-                    <div className="ml-5">
-                      <h3 className="text-lg font-medium leading-6 text-gray-900">{user.name}</h3>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <Mail className="mr-1.5 h-4 w-4" />
-                        <span>{user.email}</span>
-                      </div>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <ShieldCheck className="mr-1.5 h-4 w-4 text-green-500" />
-                        <span>Authenticated via Federated Identity</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Stats Row */}
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6 animate-in fade-in-50 duration-500 delay-200">
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-primary-100 rounded-md p-3">
-                        <Shield className="text-primary-600 h-6 w-6" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Active Sessions</dt>
-                          <dd>
-                            <div className="text-lg font-medium text-gray-900">1</div>
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                        <LogOut className="text-green-600 h-6 w-6" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Last Login</dt>
-                          <dd>
-                            <div className="text-lg font-medium text-gray-900">Just now</div>
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                        <AppWindow className="text-blue-600 h-6 w-6" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Connected Apps</dt>
-                          <dd>
-                            <div className="text-lg font-medium text-gray-900">{user.connectedApps || 1}</div>
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Protected Content */}
-              <Card className="mb-6 animate-in fade-in-50 duration-700 delay-300">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Protected Content</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">This section is only visible to authenticated users.</p>
-                </div>
-                <CardContent className="p-6">
-                  <div className="bg-gray-50 p-4 rounded border border-gray-200">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <Lock className="h-5 w-5 text-primary-600" />
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-gray-900">Identity Information</h3>
-                        <div className="mt-2 text-sm text-gray-500">
-                          <p>Your account is securely authenticated through our federated identity system.</p>
-                          <p className="mt-2">You have access to this test application through your credentials from the main application.</p>
-                        </div>
-                        <div className="mt-4">
-                          <div className="-mx-2 -my-1.5 flex">
-                            <Button variant="ghost" className="text-primary-600 hover:bg-primary-50">
-                              View Identity Details
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Token Information Section */}
-                  <div className="mt-6">
-                    <h4 className="text-base font-medium text-gray-900 mb-3">Authentication Details</h4>
-                    <div className="bg-gray-50 rounded-md p-5 shadow-sm">
-                      <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                        <div className="sm:col-span-1">
-                          <dt className="text-sm font-medium text-gray-500">Identity Provider</dt>
-                          <dd className="mt-1 text-sm text-gray-900">{user.provider || "Main Application IDP"}</dd>
-                        </div>
-                        <div className="sm:col-span-1">
-                          <dt className="text-sm font-medium text-gray-500">Authentication Method</dt>
-                          <dd className="mt-1 text-sm text-gray-900">OAuth 2.0 / OIDC</dd>
-                        </div>
-                        <div className="sm:col-span-1">
-                          <dt className="text-sm font-medium text-gray-500">Session Expires</dt>
-                          <dd className="mt-1 text-sm text-gray-900">{user.sessionExpires || "In 59 minutes"}</dd>
-                        </div>
-                        <div className="sm:col-span-1">
-                          <dt className="text-sm font-medium text-gray-500">Scopes Granted</dt>
-                          <dd className="mt-1 text-sm text-gray-900">{user.scopes || "profile, email, read:data"}</dd>
-                        </div>
-                      </dl>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Recent Activity */}
-              <Card className="animate-in fade-in-50 duration-700 delay-500">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Your authentication history across connected applications.</p>
-                </div>
-                <CardContent className="p-0">
-                  <ul className="divide-y divide-gray-200">
-                    <li>
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <LogOut className="text-green-500 h-5 w-5 mr-2" />
-                            <p className="text-sm font-medium text-primary-600 truncate">Successful login</p>
-                          </div>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Just now
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-                              </svg>
-                              {user.browser || "Browser"} on {user.os || "Operating System"}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                    {user.activities && user.activities.map((activity, index) => (
-                      <li key={index}>
-                        <div className="px-4 py-4 sm:px-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <LogOut className={`${activity.type === 'login' ? 'text-green-500' : 'text-gray-500'} h-5 w-5 mr-2`} />
-                              <p className={`text-sm font-medium ${activity.type === 'login' ? 'text-primary-600' : 'text-gray-600'} truncate`}>
-                                {activity.description}
-                              </p>
-                            </div>
-                            <div className="ml-2 flex-shrink-0 flex">
-                              <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${activity.recent ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                {activity.time}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="mt-2 sm:flex sm:justify-between">
-                            <div className="sm:flex">
-                              <p className="flex items-center text-sm text-gray-500">
-                                <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-                                </svg>
-                                {activity.device}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <UserProfileCard />
+              <ConnectivityStatus />
+              <IdentityInformation />
+              <ActivityLog />
             </div>
           </div>
         </main>

@@ -28,7 +28,7 @@ const transformFirebaseUser = (firebaseUser: FirebaseUser): AuthUser => {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || "User",
     email: firebaseUser.email || "user@example.com",
-    avatar: firebaseUser.photoURL,
+    avatar: firebaseUser.photoURL || undefined,
     provider: firebaseUser.providerData[0]?.providerId || "firebase",
     scopes: "profile email read:data",
     sessionExpires: "In 60 minutes",
