@@ -68,8 +68,8 @@ const convertDocument = <T = DocumentData>(doc: QueryDocumentSnapshot<DocumentDa
 };
 
 // Helper function to convert a collection of documents
-const convertCollection = <T = DocumentData>(snapshot: QuerySnapshot<DocumentData>): T[] => {
-  return snapshot.docs.map(doc => convertDocument<T>(doc));
+const convertCollection = <T = DocumentData>(snapshot: QuerySnapshot<unknown, DocumentData>): T[] => {
+  return snapshot.docs.map(doc => convertDocument<T>(doc as QueryDocumentSnapshot<DocumentData>));
 };
 
 // Hook to query a collection
