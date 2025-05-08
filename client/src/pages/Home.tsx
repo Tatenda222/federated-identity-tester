@@ -16,11 +16,11 @@ export default function Home() {
     setLoginProvider("federated");
     try {
       await login("federated");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Authentication Failed",
-        description: "Unable to authenticate with your application. Please try again.",
+        description: error.message || "Unable to authenticate with your application. Please try again.",
       });
       setLoginProvider(null);
     }
@@ -30,11 +30,11 @@ export default function Home() {
     setLoginProvider(provider);
     try {
       await login(provider);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Authentication Failed",
-        description: `Unable to authenticate with ${provider}. Please try again.`,
+        description: error.message || `Unable to authenticate with ${provider}. Please try again.`,
       });
       setLoginProvider(null);
     }

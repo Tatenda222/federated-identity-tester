@@ -1,7 +1,8 @@
 import { createContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { User, AuthState, AuthContextType } from "@/types/auth";
-import { authenticateWithProvider, fetchCurrentUser, logoutUser } from "@/lib/auth";
+import { User as AuthUser, AuthState, AuthContextType } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
+import { auth, loginWithProvider, logout as firebaseLogout } from "@/lib/firebase";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -21,16 +22,42 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Transform Firebase user to our app's user format
+const transformFirebaseUser = (firebaseUser: FirebaseUser): AuthUser => {
+  return {
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName || "User",
+    email: firebaseUser.email || "user@example.com",
+    avatar: firebaseUser.photoURL,
+    provider: firebaseUser.providerData[0]?.providerId || "firebase",
+    scopes: "profile email read:data",
+    sessionExpires: "In 60 minutes",
+    connectedApps: 1,
+    browser: navigator.userAgent.match(/chrome|firefox|safari|edge|opera/i)?.[0] || "Browser",
+    os: navigator.platform || "Operating System",
+    activities: [
+      {
+        id: "1",
+        type: "login",
+        description: "Successful login",
+        time: "Just now",
+        device: `${navigator.platform} (${navigator.userAgent.match(/chrome|firefox|safari|edge|opera/i)?.[0] || "Browser"})`,
+        recent: true
+      }
+    ]
+  };
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [state, setState] = useState<AuthState>(initialState);
   const { toast } = useToast();
 
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      const user = await fetchCurrentUser();
-      
-      if (user) {
+  // Set up Firebase auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        const user = transformFirebaseUser(firebaseUser);
         setState({
           isAuthenticated: true,
           user,
@@ -38,6 +65,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           error: null,
         });
       } else {
+        // User is signed out
         setState({
           isAuthenticated: false,
           user: null,
@@ -45,68 +73,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           error: null,
         });
       }
-    } catch (error) {
-      console.error("Failed to check auth status:", error);
-      setState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-        error: "Failed to verify authentication status",
-      });
-    }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  // Check authentication status when the component mounts
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  // Parse the URL for OAuth callbacks
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    const error = url.searchParams.get("error");
-    
-    if (code && state) {
-      // Handle OAuth callback
-      const provider = localStorage.getItem("oauth_provider") || "federated";
-      
-      // Remove OAuth parameters from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Complete the OAuth flow
-      login(provider, code, state);
-    } else if (error) {
-      // Handle OAuth error
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: url.searchParams.get("error_description") || "Failed to authenticate",
-      });
-      
-      // Remove error parameters from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+  const checkAuthStatus = useCallback(async () => {
+    // No need to do anything here, Firebase's onAuthStateChanged will handle this
+    return;
   }, []);
 
-  const login = async (provider: string, code?: string, state?: string) => {
+  const login = async (provider: string) => {
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       
-      // Store the provider for OAuth callback handling
-      localStorage.setItem("oauth_provider", provider);
+      // Call Firebase authentication
+      await loginWithProvider(provider);
       
-      // Call the authentication API
-      const user = await authenticateWithProvider(provider, code, state);
+      // The auth state change will be caught by onAuthStateChanged
       
-      setState({
-        isAuthenticated: true,
-        user,
-        isLoading: false,
-        error: null,
-      });
-
       toast({
         title: "Authentication Successful",
         description: `You've been successfully authenticated with ${provider}.`,
@@ -125,14 +111,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async () => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
-      await logoutUser();
-      localStorage.removeItem("oauth_provider");
+      await firebaseLogout();
       
-      setState({
-        isAuthenticated: false,
-        user: null,
-        isLoading: false,
-        error: null,
+      // The auth state change will be caught by onAuthStateChanged
+      
+      toast({
+        title: "Logout Successful",
+        description: "You have been logged out successfully.",
       });
     } catch (error) {
       console.error("Logout failed:", error);
