@@ -4,6 +4,7 @@ import Dashboard from "@/pages/Dashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NotFound from "@/pages/not-found";
+import AuthCallback from "@/pages/AuthCallback";
 import { useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 
@@ -16,10 +17,17 @@ function App() {
     checkAuthStatus();
   }, [checkAuthStatus, location]);
 
+  // Redirect to dashboard if authenticated and on home page
+  useEffect(() => {
+    if (isAuthenticated && location === '/') {
+      setLocation('/dashboard');
+    }
+  }, [isAuthenticated, location, setLocation]);
+
   // Redirect to login if accessing protected routes while not authenticated
   useEffect(() => {
     if (!isAuthenticated && location.startsWith("/dashboard")) {
-      setLocation("/");
+      setLocation('/');
     }
   }, [isAuthenticated, location, setLocation]);
 
@@ -31,6 +39,7 @@ function App() {
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/dashboard/:tab" component={Dashboard} />
+          <Route path="/auth/callback" component={AuthCallback} />
           <Route component={NotFound} />
         </Switch>
       </main>

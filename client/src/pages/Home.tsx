@@ -1,41 +1,37 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, LogIn, Info, KeyRound } from "lucide-react";
 import { useState } from "react";
-import { FaGoogle, FaMicrosoft, FaGithub } from "react-icons/fa";
+import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
   const { login, isLoading, isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [loginProvider, setLoginProvider] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const handleFederatedLogin = async () => {
     setLoginProvider("federated");
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 100);
+
     try {
       await login("federated");
+      // The redirect will happen in the login function, so this code won't execute
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Failed",
-        description: error.message || "Unable to authenticate with your application. Please try again.",
-      });
-      setLoginProvider(null);
-    }
-  };
-
-  const handleProviderLogin = async (provider: string) => {
-    setLoginProvider(provider);
-    try {
-      await login(provider);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Failed",
-        description: error.message || `Unable to authenticate with ${provider}. Please try again.`,
-      });
+      // No toast notification, just reset state
+      clearInterval(interval);
+      setProgress(0);
       setLoginProvider(null);
     }
   };
@@ -108,67 +104,18 @@ export default function Home() {
                 ) : (
                   <>
                     <LogIn className="mr-2 h-5 w-5" />
-                    <span>Continue with Your Main Application</span>
+                    <span>LOGIN USING ACCESS FEDERATED APPLICATION</span>
                   </>
                 )}
               </Button>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-3">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleProviderLogin('google')}
-                disabled={isLoading}
-              >
-                {isLoading && loginProvider === "google" ? (
-                  <svg className="animate-spin h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <FaGoogle className="h-5 w-5" />
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleProviderLogin('microsoft')}
-                disabled={isLoading}
-              >
-                {isLoading && loginProvider === "microsoft" ? (
-                  <svg className="animate-spin h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <FaMicrosoft className="h-5 w-5" />
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleProviderLogin('github')}
-                disabled={isLoading}
-              >
-                {isLoading && loginProvider === "github" ? (
-                  <svg className="animate-spin h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <FaGithub className="h-5 w-5" />
-                )}
-              </Button>
+              {loginProvider === "federated" && (
+                <div className="mt-4">
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-sm text-center text-gray-500 mt-2">
+                    Redirecting to authentication...
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

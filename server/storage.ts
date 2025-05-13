@@ -17,6 +17,7 @@ export interface IStorage {
   getUserByProviderAndEmail(provider: string, email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSession(userId: number): Promise<User | undefined>;
+  updateUserToken(userId: number, token: string): Promise<User | undefined>;
   
   // Session methods
   createSession(session: InsertSession): Promise<Session>;
@@ -81,6 +82,14 @@ export class MemStorage implements IStorage {
       ...insertUser,
       id,
       createdAt: now,
+      avatar: null,
+      provider: null,
+      providerId: null,
+      accessToken: null,
+      refreshToken: null,
+      tokenExpiry: null,
+      scopes: null,
+      metadata: null
     };
     
     this.users.set(id, user);
@@ -100,6 +109,20 @@ export class MemStorage implements IStorage {
     
     const updatedUser: User = {
       ...user,
+      tokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserToken(userId: number, token: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      accessToken: token,
       tokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
     };
     
@@ -135,6 +158,8 @@ export class MemStorage implements IStorage {
       ...insertLog,
       id,
       createdAt: new Date(),
+      userAgent: insertLog.userAgent ?? null,
+      ipAddress: insertLog.ipAddress ?? null
     };
     
     this.activityLogs.set(id, log);

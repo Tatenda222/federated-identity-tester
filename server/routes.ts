@@ -42,12 +42,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // OAuth callback handler - in a real app this would process the code from the identity provider
   app.post("/api/auth/callback", (req, res) => {
-    const { provider, code, state } = req.body;
+    const { provider, token } = req.body;
     
-    // In a real app, we would exchange the code for tokens with the identity provider
+    if (!token) {
+      return res.status(400).json({ error: "No token provided" });
+    }
+    
+    // In a real app, we would validate the JWT token here
     // For this demo, we'll authenticate the user locally
     
-    passport.authenticate("local", (err, user) => {
+    passport.authenticate("local", { token }, (err, user) => {
       if (err) {
         return res.status(500).json({ error: "Authentication error" });
       }

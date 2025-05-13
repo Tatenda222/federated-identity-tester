@@ -1,18 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, LogOut, AppWindow } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserConnections } from "@/hooks/useFirestore";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ConnectivityStatus() {
   const { user } = useAuth();
-  const { documents: connections, loading } = useUserConnections();
   
   if (!user) return null;
   
-  // Calculate connection data
+  // Get connection data from user object
   const sessionExpires = user.sessionExpires || "In 60 minutes";
-  const connectionCount = loading ? 0 : connections?.length || 1;
+  const connectionCount = user.connectedApps || 1;
   
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6 animate-in fade-in-50 duration-500 delay-200">
@@ -26,11 +23,7 @@ export default function ConnectivityStatus() {
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Active Sessions</dt>
                 <dd>
-                  {loading ? (
-                    <Skeleton className="h-6 w-16 mt-1" />
-                  ) : (
-                    <div className="text-lg font-medium text-gray-900">1</div>
-                  )}
+                  <div className="text-lg font-medium text-gray-900">1</div>
                 </dd>
               </dl>
             </div>
@@ -48,11 +41,7 @@ export default function ConnectivityStatus() {
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Session Expires</dt>
                 <dd>
-                  {loading ? (
-                    <Skeleton className="h-6 w-24 mt-1" />
-                  ) : (
-                    <div className="text-lg font-medium text-gray-900">{sessionExpires}</div>
-                  )}
+                  <div className="text-lg font-medium text-gray-900">{sessionExpires}</div>
                 </dd>
               </dl>
             </div>
@@ -70,11 +59,7 @@ export default function ConnectivityStatus() {
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Connected Apps</dt>
                 <dd>
-                  {loading ? (
-                    <Skeleton className="h-6 w-12 mt-1" />
-                  ) : (
-                    <div className="text-lg font-medium text-gray-900">{connectionCount}</div>
-                  )}
+                  <div className="text-lg font-medium text-gray-900">{connectionCount}</div>
                 </dd>
               </dl>
             </div>

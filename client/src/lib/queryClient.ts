@@ -7,21 +7,54 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+export const API_BASE_URL = 'http://localhost:5000';
 
-  await throwIfResNotOk(res);
-  return res;
-}
+export const apiRequest = async (
+  method: string,
+  endpoint: string,
+  body?: any
+): Promise<Response> => {
+  console.log(`API Request: ${method} ${endpoint}`); // Debug log
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  // Add the authentication token if available
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    console.log('Auth token found and added to headers'); // Debug log
+  } else {
+    console.log('No auth token found'); // Debug log
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method,
+      headers,
+      credentials: 'include',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    console.log(`API Response: ${response.status} ${response.statusText}`); // Debug log
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.log('Unauthorized response (401), clearing tokens'); // Debug log
+        // Clear the token if we get an unauthorized response
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('main_app_token');
+      }
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error('API request error:', error); // Debug log
+    throw error;
+  }
+};
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {

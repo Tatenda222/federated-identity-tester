@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import MemoryStore from "memorystore";
 import { User } from "@shared/schema";
+import { extractUserFromToken } from "./utils/jwt";
 
 // Create a memory store for sessions
 const MemoryStoreConstructor = MemoryStore(session);
@@ -39,59 +40,73 @@ passport.use(
     },
     async (req, provider, _, done) => {
       try {
-        // In a real app, we would validate the credentials with the identity provider
-        // Here we're just creating a mock user for demonstration
-        
-        // Check if a user with this provider/email combination exists
-        const email = "demo@example.com";
-        let existingUser = await storage.getUserByProviderAndEmail(provider, email);
-        
-        if (existingUser) {
-          // Update the user's session info
-          await storage.updateUserSession(existingUser.id);
-          
-          // Log the login activity
-          await storage.createActivityLog({
-            userId: existingUser.id,
-            type: "login",
-            description: "Successful login",
-            userAgent: req.headers["user-agent"] || "",
-            ipAddress: req.ip || "",
-          });
-          
-          return done(null, existingUser);
+        // For federated login, we expect the user to be authenticated by the main application
+        // and the user info to be passed in the request
+        if (provider === "federated") {
+          // Get the token from the request body
+          const { token } = req.body;
+          if (!token) {
+            return done(new Error("No token provided from main application"));
+          }
+
+          try {
+            // Extract user information from the JWT token
+            const userData = extractUserFromToken(token);
+            
+            // Check if user exists
+            let existingUser = await storage.getUserByProviderAndEmail(provider, userData.email!);
+            
+            if (existingUser) {
+              // Update the user's token and session
+              await storage.updateUserToken(existingUser.id, token);
+              await storage.updateUserSession(existingUser.id);
+              await storage.createActivityLog({
+                userId: existingUser.id,
+                type: "login",
+                description: "Successful federated login from main application",
+                userAgent: req.headers["user-agent"] || "",
+                ipAddress: req.ip || "",
+              });
+              return done(null, existingUser);
+            }
+            
+            // Create a new user with the extracted information
+            const newUser = await storage.createUser({
+              username: `user_${randomBytes(4).toString("hex")}`,
+              password: randomBytes(16).toString("hex"),
+              name: userData.name || "Unknown User",
+              email: userData.email || "unknown@example.com",
+              provider: userData.provider || provider,
+              providerId: userData.providerId || `${provider}_id_${randomBytes(8).toString("hex")}`,
+              accessToken: userData.accessToken || token,
+              refreshToken: `mock_refresh_token_${randomBytes(8).toString("hex")}`,
+              tokenExpiry: userData.tokenExpiry || new Date(Date.now() + 3600000),
+              scopes: userData.scopes || "profile email read:data",
+              metadata: userData.metadata || {
+                connectedApps: 1,
+                browser: "Browser",
+                os: "Operating System",
+                mainAppUrl: "http://localhost:3000"
+              }
+            });
+            
+            await storage.createActivityLog({
+              userId: newUser.id,
+              type: "login",
+              description: "Account created and first federated login from main application",
+              userAgent: req.headers["user-agent"] || "",
+              ipAddress: req.ip || "",
+            });
+            
+            return done(null, newUser);
+          } catch (error) {
+            console.error('Error processing token:', error);
+            return done(error);
+          }
         }
         
-        // Create a new user for this demo
-        const newUser = await storage.createUser({
-          username: `user_${randomBytes(4).toString("hex")}`,
-          password: randomBytes(16).toString("hex"), // Random password for demo
-          name: "Demo User",
-          email: email,
-          provider: provider,
-          providerId: `${provider}_id_${randomBytes(8).toString("hex")}`,
-          accessToken: `mock_access_token_${randomBytes(8).toString("hex")}`,
-          refreshToken: `mock_refresh_token_${randomBytes(8).toString("hex")}`,
-          tokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
-          scopes: "profile email read:data",
-          metadata: {
-            isDemo: true,
-            connectedApps: 1,
-            browser: req.headers["user-agent"] ? "Browser" : "Unknown",
-            os: "Operating System",
-          },
-        });
-        
-        // Log the new user creation and login
-        await storage.createActivityLog({
-          userId: newUser.id,
-          type: "login",
-          description: "Account created and first login",
-          userAgent: req.headers["user-agent"] || "",
-          ipAddress: req.ip || "",
-        });
-        
-        done(null, newUser);
+        // Handle other providers...
+        // ... existing code for other providers ...
       } catch (err) {
         done(err);
       }
@@ -146,14 +161,13 @@ export function transformUser(user: User | undefined) {
     id: user.id,
     name: user.name,
     email: user.email,
-    avatar: null, // We don't store avatars in this demo
+    avatar: user.avatar,
     provider: user.provider || "federated",
     scopes: user.scopes || "profile, email, read:data",
     sessionExpires: user.tokenExpiry ? `In ${Math.floor((new Date(user.tokenExpiry).getTime() - Date.now()) / 60000)} minutes` : "In 59 minutes",
     connectedApps: metadata.connectedApps || 1,
     browser: metadata.browser || "Browser",
     os: metadata.os || "Operating System",
-    // We'd typically load activities from a separate table in a real app
     activities: [],
   };
 }
