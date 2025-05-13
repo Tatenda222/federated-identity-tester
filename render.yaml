@@ -1,7 +1,8 @@
 services:
   - type: web
     name: federated-identity-tester
-    env: node
+    runtime: node
+    nodeVersion: 18.17.0
     buildCommand: |
       npm install
       cd client && npm install && cd ..
