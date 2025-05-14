@@ -1,9 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite } from "./vite";
 import cors from "cors";
 import { createServer } from "http";
-import { setupDevServer } from "./dev";
 
 const app = express();
 const server = createServer(app);
@@ -46,7 +45,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
@@ -64,11 +63,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  if (process.env.NODE_ENV === "production") {
-    setupVite(app, server);
-  } else {
-    setupDevServer(app, server);
-  }
+  setupVite(app, server);
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
@@ -78,6 +73,6 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0"
   }, () => {
-    log(`serving on port ${port}`);
+    console.log(`serving on port ${port}`);
   });
 })();
