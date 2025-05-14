@@ -16,6 +16,9 @@ interface JWTPayload {
   };
 }
 
+const MAIN_APP_URL = 'https://tatendamhakaprojects.web.app';
+// const MAIN_APP_URL = 'http://localhost:3000';
+
 export function parseToken(token: string): JWTPayload {
   try {
     // For development, we'll just decode the token without verification
@@ -53,7 +56,7 @@ export function extractUserFromToken(token: string): Partial<User> {
       connectedApps: 1,
       browser: 'Browser',
       os: 'Operating System',
-      mainAppUrl: 'http://localhost:3000'
+      mainAppUrl: MAIN_APP_URL
     }
   };
 } 

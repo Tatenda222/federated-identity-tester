@@ -11,6 +11,11 @@ import { extractUserFromToken } from "./utils/jwt";
 // Create a memory store for sessions
 const MemoryStoreConstructor = MemoryStore(session);
 
+
+
+const MAIN_APP_URL = 'https://tatendamhakaprojects.web.app';
+// const MAIN_APP_URL = 'http://localhost:3000';
+
 // Session store configuration
 const sessionStore = new MemoryStoreConstructor({
   checkPeriod: 86400000, // prune expired entries every 24h
@@ -86,7 +91,7 @@ passport.use(
                 connectedApps: 1,
                 browser: "Browser",
                 os: "Operating System",
-                mainAppUrl: "http://localhost:3000"
+                mainAppUrl: MAIN_APP_URL
               }
             });
             

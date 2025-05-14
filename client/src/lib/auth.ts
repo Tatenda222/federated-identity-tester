@@ -2,6 +2,7 @@ import { apiRequest } from "./queryClient";
 import { User, LoginResponse, OAuthCredentials } from "@/types/auth";
 
 const MAIN_APP_URL = 'https://tatendamhakaprojects.web.app';
+// const MAIN_APP_URL = 'http://localhost:3000';
 
 /**
  * Authenticate a user with a federated identity provider
